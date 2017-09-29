@@ -62,6 +62,7 @@
     <Compile Include="CloudStream.cs" />
     <Compile Include="GMADZip\AddonJSON.cs" />
     <Compile Include="GMADZip\CRC32.cs" />
+    <Compile Include="GMADZip\CrcStream.cs" />
     <Compile Include="GMADZip\DescriptionJSON.cs" />
     <Compile Include="GMADZip\GMAD.cs" />
     <Compile Include="GMADZip\Whitelist.cs" />

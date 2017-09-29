@@ -71,7 +71,7 @@ namespace gmpublish
 
         static byte[] SHAHash(Stream stream)
         {
-            
+
             using (var sha = new SHA1Managed())
             {
                 byte[] hash;
@@ -85,56 +85,99 @@ namespace gmpublish
         {
             var task = Task.Run(async () =>
             {
-                await CloudStream.DeleteFile("gmpublish_icon.jpg", APPID, steamClient);
-                await CloudStream.DeleteFile("gmpublish.gma", APPID, steamClient);
-
-                var zipPath = DownloadZip(@"https://github.com/FPtje/Falcos-Prop-protection/archive/master.zip");
-                var gmaPath = Path.GetTempFileName();
-                using (ZipFile zip = ZipFile.Read(zipPath))
+                try
                 {
+                    await CloudStream.DeleteFile("gmpublish_icon.jpg", APPID, steamClient);
+                    await CloudStream.DeleteFile("gmpublish.gma", APPID, steamClient);
+
+                    var baseFolder = "./Addon";
+                    var gmaPath = "./addon.gma"; //Path.GetTempFileName();
+
+                    var addonJsonPath = Path.Combine(baseFolder, "addon.json");
+                    if (!File.Exists(addonJsonPath)) { throw new Exception("No addon.json file found in specified folder"); }
+                    AddonJSON addon;
+                    using (FileStream addonStream = new FileStream(addonJsonPath, FileMode.Open))
+                    {
+                        addon = addonStream.CreateFromJsonStream<AddonJSON>();
+                    }
+                    if (addon.Icon == "") { throw new Exception("No icon file specified"); }
                     using (Stream gmaStream = new FileStream(gmaPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
                     {
-                        var icon = new MemoryStream();
-                        var baseFolder = Extensions.GetRootFolder(GMAD.FindAddonJson(zip));
-                        var file = zip[baseFolder + "/FPPLogo.jpg"];
-                        file.Extract(icon);
-                        icon.Seek(0, SeekOrigin.Begin);
 
-                        var hash = SHAHash(icon);
-
-                        var success = await CloudStream.UploadStream("gmpublish_icon.jpg", APPID, hash, icon.Length, steamClient, icon);
-                        if (!success) { Console.WriteLine("JPG Upload failed"); return; }
-
-                        GMAD.Create(zip, gmaStream);
+                        GMAD.Create(baseFolder, addon, gmaStream);
                         gmaStream.Seek(0, SeekOrigin.Begin);
+
                         var lzmaStream = LZMAEncodeStream.CompressStreamLZMA(gmaStream);
                         var hashGma = SHAHash(lzmaStream);
 
-                        success = await CloudStream.UploadStream("gmpublish.gma", APPID, hashGma, lzmaStream.Length, steamClient, lzmaStream);
-                        if (!success) { Console.WriteLine("GMA Upload failed"); return; }
+                        using (var icon = new FileStream(Path.Combine(baseFolder, addon.Icon), FileMode.Open))
+                        {
+                            var hash = SHAHash(icon);
+                            var iconSuccess = await CloudStream.UploadStream("gmpublish_icon.jpg", APPID, hash, icon.Length, steamClient, icon);
+                            if (!iconSuccess) { Console.WriteLine("JPG Upload failed"); return; }
+                        }
 
+                        var gmaSuccess = await CloudStream.UploadStream("gmpublish.gma", APPID, hashGma, lzmaStream.Length, steamClient, lzmaStream);
+                        if (!gmaSuccess) { Console.WriteLine("GMA Upload failed"); return; }
+                    }
+
+
+                    //File.Delete(gmaPath);
+
+                    var publishService = steamUnifiedMessages.CreateService<IPublishedFile>();
+                    if (addon.WorkshopID == 0)
+                    {
+                        var request = new CPublishedFile_Publish_Request
+                        {
+                            appid = APPID,
+                            consumer_appid = APPID,
+                            cloudfilename = "gmpublish.gma",
+                            preview_cloudfilename = "gmpublish_icon.jpg",
+                            title = addon.Title,
+                            file_description = addon.Description,
+                            file_type = (uint)EWorkshopFileType.Community,
+                            visibility = (uint)EPublishedFileVisibility.Public,
+                            collection_type = addon.Type,
+                        };
+                        foreach (var tag in addon.Tags) { request.tags.Add(tag); }
+
+                        var publishCallback = await publishService.SendMessage(publish => publish.Publish(request));
+                        var publishResponse = publishCallback.GetDeserializedResponse<CPublishedFile_Publish_Response>();
+                        addon.WorkshopID = publishResponse.publishedfileid;
+
+                        using (FileStream addonStream = new FileStream(addonJsonPath, FileMode.Create))
+                        {
+                            addonStream.WriteObjectToStreamJson(addon);
+                        }
+                        Console.WriteLine("NEW PUBLISHED ID: " + publishResponse.publishedfileid + ". Wrote to addon.json");
+                    }
+                    else
+                    {
+                        var request = new CPublishedFile_Update_Request
+                        {
+                            image_height = 512,
+                            image_width = 512,
+                            publishedfileid = addon.WorkshopID,
+                            appid = APPID,
+                            filename = "gmpublish.gma",
+                            preview_filename = "gmpublish_icon.jpg",
+                            title = addon.Title,
+                            file_description = addon.Description,
+                            visibility = (uint)EPublishedFileVisibility.Public,
+                        };
+                        foreach (var tag in addon.Tags) { request.tags.Add(tag); }
+
+                        var updateCallback = await publishService.SendMessage(publish => publish.Update(request));
+                        var updateResponse = updateCallback.GetDeserializedResponse<CPublishedFile_Update_Response>();
+                        
+                        Console.WriteLine("Addon has been updated");
                     }
                 }
-
-                File.Delete(gmaPath);
-                File.Delete(zipPath);
-
-                var publishService = steamUnifiedMessages.CreateService<IPublishedFile>();
-                var request = new CPublishedFile_Publish_Request
+                catch (Exception ex)
                 {
-                    appid = APPID,
-                    consumer_appid = APPID,
-                    cloudfilename = "gmpublish.gma",
-                    preview_cloudfilename = "gmpublish_icon.jpg",
-                    title = "GMPublish.NET Test!",
-                    file_description = "This is a test file description.",
-                    file_type = (uint)EWorkshopFileType.Community,
-                    visibility = (uint)EPublishedFileVisibility.Public
-                };
-
-                var publishCallback = await publishService.SendMessage(publish => publish.Publish(request));
-                var publishResponse = publishCallback.GetDeserializedResponse<CPublishedFile_Publish_Response>();
-                Console.WriteLine("NEW PUBLISHED ID: " + publishResponse.publishedfileid);
+                    Console.WriteLine(ex);
+                    Console.ReadKey();
+                }
             });
             task.Wait();
             steamUser.LogOff();

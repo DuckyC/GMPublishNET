@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace gmpublish.GMADZip
 {
-    class AddonJSON : DescriptionJSON
+    public class AddonJSON : DescriptionJSON
     {
         [JsonProperty("ignore")]
         public List<string> Ignores { get; set; }
@@ -17,6 +17,9 @@ namespace gmpublish.GMADZip
 
         [JsonProperty("default_changelog")]
         public string DefaultChangelog { get; set; }
+
+        [JsonProperty("icon")]
+        public string Icon { get; set; }
 
         public string BuildDescription()
         {

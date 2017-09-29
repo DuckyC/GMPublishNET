@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace gmpublish.GMADZip
 {
-    class DescriptionJSON
+    public class DescriptionJSON
     {
         [JsonProperty("description")]
         public string Description;

@@ -1,11 +1,52 @@
 ﻿using System;
+using System.IO;
+
 namespace gmpublish.GMADZip
 {
     /// <summary>
     /// Provides methods to compute CRC32 checksums.
     /// </summary>
-    static class CRC32
+    public class CRC32
     {
+
+        private uint _CRC = 0xffffffff;
+
+        public void Reset()
+        {
+            _CRC = 0xffffffff;
+        }
+
+        public void Update(byte[] bytes, int count)
+        {
+            for (int i = 0; i < count; ++i)
+            {
+                byte index = (byte)(((_CRC) & 0xff) ^ bytes[i]);
+                _CRC = (uint)((_CRC >> 8) ^ table[index]);
+            }
+        }
+
+        public uint CRC
+        {
+            get
+            {
+                return ~_CRC;
+            }
+        }
+
+        public static uint ComputeChecksum(Stream stream)
+        {
+            var CRC = new CRC32();
+            byte[] buff = new byte[1024];
+            while (stream.Length != stream.Position)
+            {
+                int count = stream.Read(buff, 0, buff.Length);
+                CRC.Update(buff, count);
+            }
+            return CRC.CRC;
+
+        }
+
+
         /// <summary>
         /// The table containing calculation polynomials.
         /// </summary>

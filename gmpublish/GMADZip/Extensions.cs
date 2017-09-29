@@ -36,6 +36,15 @@ namespace gmpublish.GMADZip
             return data;
         }
 
+        public static void WriteObjectToStreamJson(this Stream stream, object serializable)
+        {
+            JsonSerializer serializer = new JsonSerializer();
+            using (StreamWriter streamWriter = new StreamWriter(stream))
+            {
+                serializer.Serialize(streamWriter, serializable);
+            }
+        }
+
         public static ulong ToUnixTime(this DateTime date)
         {
             var epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
