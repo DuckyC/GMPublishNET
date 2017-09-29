@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace gmpublish.GMADZip
+namespace GMPublish.GMAD
 {
     static class Whitelist
     {

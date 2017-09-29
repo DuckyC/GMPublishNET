@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace gmpublish.GMADZip
+namespace GMPublish.GMAD
 {
     /// <summary>
     /// Provides methods to compute CRC32 checksums.
@@ -50,7 +50,7 @@ namespace gmpublish.GMADZip
         /// <summary>
         /// The table containing calculation polynomials.
         /// </summary>
-        static uint[] table;
+        public static uint[] table;
 
         /// <summary>
         /// Calculates the CRC32 checksum for the provided byte array.

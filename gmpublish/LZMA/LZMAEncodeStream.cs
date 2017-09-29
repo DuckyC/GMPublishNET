@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace gmpublish.LZMA
+namespace GMPublish.LZMA
 {
     public static class LZMAEncodeStream
     {

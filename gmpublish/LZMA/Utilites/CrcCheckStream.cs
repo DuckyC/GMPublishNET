@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace gmpublish.LZMA.Utilites
+namespace GMPublish.LZMA.Utilites
 {
     internal class CrcCheckStream : Stream
     {

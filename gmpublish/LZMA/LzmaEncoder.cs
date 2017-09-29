@@ -1,7 +1,7 @@
 using System;
-using gmpublish.LZMA.RangeCoder;
+using GMPublish.LZMA.RangeCoder;
 
-namespace gmpublish.LZMA
+namespace GMPublish.LZMA
 {
     internal class Encoder : ICoder, ISetCoderProperties, IWriteCoderProperties
     {

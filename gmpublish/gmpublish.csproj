@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -64,10 +65,9 @@
     <Compile Include="GMADZip\CRC32.cs" />
     <Compile Include="GMADZip\CrcStream.cs" />
     <Compile Include="GMADZip\DescriptionJSON.cs" />
-    <Compile Include="GMADZip\GMAD.cs" />
+    <Compile Include="GMADZip\GMADCreator.cs" />
     <Compile Include="GMADZip\Whitelist.cs" />
     <Compile Include="GMADZip\Tags.cs" />
-    <Compile Include="gmosh.cs" />
     <Compile Include="GMADZip\Extensions.cs" />
     <Compile Include="LZMA\CRC.cs" />
     <Compile Include="LZMA\ICoder.cs" />

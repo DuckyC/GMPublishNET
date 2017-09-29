@@ -1,6 +1,6 @@
 using System;
 
-namespace gmpublish.LZMA.RangeCoder
+namespace GMPublish.LZMA.RangeCoder
 {
     internal struct BitEncoder
     {

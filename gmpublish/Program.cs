@@ -1,6 +1,6 @@
-﻿using gmpublish.LZMA;
+﻿using GMPublish.LZMA;
 using Ionic.Zip;
-using gmpublish.GMADZip;
+using GMPublish.GMAD;
 using SteamKit2;
 using SteamKit2.Unified.Internal;
 using System;
@@ -10,7 +10,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace gmpublish
+namespace GMPublish
 {
     class Program
     {
@@ -20,7 +20,6 @@ namespace gmpublish
         static SteamUser steamUser;
 
         static SteamUnifiedMessages steamUnifiedMessages;
-        static SteamUnifiedMessages.UnifiedService<ICloud> cloudService;
 
         static bool isRunning;
 
@@ -104,11 +103,9 @@ namespace gmpublish
                     using (Stream gmaStream = new FileStream(gmaPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
                     {
 
-                        GMAD.Create(baseFolder, addon, gmaStream);
+                        GMADCreator.Create(baseFolder, addon, gmaStream);
                         gmaStream.Seek(0, SeekOrigin.Begin);
 
-                        var lzmaStream = LZMAEncodeStream.CompressStreamLZMA(gmaStream);
-                        var hashGma = SHAHash(lzmaStream);
 
                         using (var icon = new FileStream(Path.Combine(baseFolder, addon.Icon), FileMode.Open))
                         {
@@ -117,12 +114,11 @@ namespace gmpublish
                             if (!iconSuccess) { Console.WriteLine("JPG Upload failed"); return; }
                         }
 
+                        var lzmaStream = LZMAEncodeStream.CompressStreamLZMA(gmaStream);
+                        var hashGma = SHAHash(lzmaStream);
                         var gmaSuccess = await CloudStream.UploadStream("gmpublish.gma", APPID, hashGma, lzmaStream.Length, steamClient, lzmaStream);
                         if (!gmaSuccess) { Console.WriteLine("GMA Upload failed"); return; }
                     }
-
-
-                    //File.Delete(gmaPath);
 
                     var publishService = steamUnifiedMessages.CreateService<IPublishedFile>();
                     if (addon.WorkshopID == 0)
@@ -182,16 +178,6 @@ namespace gmpublish
             task.Wait();
             steamUser.LogOff();
             isRunning = false;
-        }
-
-        static string DownloadZip(string url)
-        {
-            var path = Path.GetTempFileName();
-            using (var client = new WebClient())
-            {
-                client.DownloadFile(url, path);
-            }
-            return path;
         }
 
         #region SteamLogin

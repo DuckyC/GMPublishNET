@@ -1,4 +1,4 @@
-namespace gmpublish.LZMA
+namespace GMPublish.LZMA
 {
     internal abstract class Base
     {

@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace gmpublish.GMADZip
+namespace GMPublish.GMAD
 {
     /// <summary>
     /// Provides methods to use the internal tag database.

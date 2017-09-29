@@ -1,6 +1,6 @@
 using System;
 
-namespace gmpublish.LZMA.LZ
+namespace GMPublish.LZMA.LZ
 {
     internal class InWindow
     {

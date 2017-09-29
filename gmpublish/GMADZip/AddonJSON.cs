@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace gmpublish.GMADZip
+namespace GMPublish.GMAD
 {
     public class AddonJSON : DescriptionJSON
     {
@@ -23,15 +23,17 @@ namespace gmpublish.GMADZip
 
         public string BuildDescription()
         {
-            DescriptionJSON tree = new DescriptionJSON();
-            tree.Description = this.Description;
+            var tree = new DescriptionJSON
+            {
+                Description = this.Description
+            };
 
             // Load the addon type
             if (this.Type.ToLowerInvariant() == String.Empty || this.Type.ToLowerInvariant() == null)
                 throw new Exception("type is empty!");
             else
             {
-                if (!GMADZip.Tags.TypeExists(this.Type.ToLowerInvariant()))
+                if (!GMAD.Tags.TypeExists(this.Type.ToLowerInvariant()))
                     throw new Exception("type isn't a supported type!");
                 else
                     tree.Type = this.Type.ToLowerInvariant();
@@ -47,7 +49,7 @@ namespace gmpublish.GMADZip
                 {
                     if (tag == String.Empty || tag == null) continue;
 
-                    if (!GMADZip.Tags.TagExists(tag.ToLowerInvariant()))
+                    if (!GMAD.Tags.TagExists(tag.ToLowerInvariant()))
                         throw new Exception("tag isn't a supported word!");
                     else
                         tree.Tags.Add(tag.ToLowerInvariant());

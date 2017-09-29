@@ -1,6 +1,6 @@
 using System;
 
-namespace gmpublish.LZMA
+namespace GMPublish.LZMA
 {
     /// <summary>
     /// The exception that is thrown when an error in input stream occurs during decoding.

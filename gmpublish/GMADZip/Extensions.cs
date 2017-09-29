@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace gmpublish.GMADZip
+namespace GMPublish.GMAD
 {
     public static class Extensions
     {
@@ -61,16 +61,6 @@ namespace gmpublish.GMADZip
 
             return result;
         }
-        public static string GetRootFolder(string path)
-        {
-            while (true)
-            {
-                string temp = Path.GetDirectoryName(path);
-                if (String.IsNullOrEmpty(temp))
-                    break;
-                path = temp;
-            }
-            return path;
-        }
+      
     }
 }

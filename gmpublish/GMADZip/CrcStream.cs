@@ -1,158 +1,132 @@
 using System;
 using System.IO;
 
-namespace gmpublish.GMADZip
+namespace GMPublish.GMAD
 {
-	/// <summary>
-	/// Encapsulates a <see cref="System.IO.Stream" /> to calculate the CRC32 checksum on-the-fly as data passes through.
-	/// </summary>
-	public class CrcStream : Stream
-	{
-		/// <summary>
-		/// Encapsulate a <see cref="System.IO.Stream" />.
-		/// </summary>
-		/// <param name="stream">The stream to calculate the checksum for.</param>
-		public CrcStream(Stream stream)
-		{
-			this.stream = stream;
-		}
+    /// <summary>
+    /// Encapsulates a <see cref="System.IO.Stream" /> to calculate the CRC32 checksum on-the-fly as data passes through.
+    /// </summary>
+    public class CrcStream : Stream
+    {
+        /// <summary>
+        /// Encapsulate a <see cref="System.IO.Stream" />.
+        /// </summary>
+        /// <param name="stream">The stream to calculate the checksum for.</param>
+        public CrcStream(Stream stream)
+        {
+            this.stream = stream;
+        }
 
-		Stream stream;
+        Stream stream;
 
-		/// <summary>
-		/// Gets the underlying stream.
-		/// </summary>
-		public Stream Stream
-		{
-			get { return stream; }
-		}
+        /// <summary>
+        /// Gets the underlying stream.
+        /// </summary>
+        public Stream Stream
+        {
+            get { return stream; }
+        }
 
-		public override bool CanRead
-		{
-			get { return stream.CanRead; }
-		}
+        uint readCrc = unchecked(0xFFFFFFFF);
 
-		public override bool CanSeek
-		{
-			get { return stream.CanSeek; }
-		}
+        /// <summary>
+        /// Gets the CRC checksum of the data that was read by the stream thus far.
+        /// </summary>
+        public uint ReadCrc
+        {
+            get { return unchecked(readCrc ^ 0xFFFFFFFF); }
+        }
 
-		public override bool CanWrite
-		{
-			get { return stream.CanWrite; }
-		}
+        uint writeCrc = unchecked(0xFFFFFFFF);
 
-		public override void Flush()
-		{
-			stream.Flush();
-		}
+        /// <summary>
+        /// Gets the CRC checksum of the data that was written to the stream thus far.
+        /// </summary>
+        public uint WriteCrc
+        {
+            get { return unchecked(writeCrc ^ 0xFFFFFFFF); }
+        }
 
-		public override long Length
-		{
-			get { return stream.Length; }
-		}
+        /// <summary>
+        /// Resets the read and write checksums.
+        /// </summary>
+        public void ResetChecksum()
+        {
+            readCrc = unchecked(0xFFFFFFFF);
+            writeCrc = unchecked(0xFFFFFFFF);
+        }
 
-		public override long Position
-		{
-			get
-			{
-				return stream.Position;
-			}
-			set
-			{
-				stream.Position = value;
-			}
-		}
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            count = stream.Read(buffer, offset, count);
+            readCrc = CalculateCrc(readCrc, buffer, offset, count);
+            return count;
+        }
 
-		public override long Seek(long offset, SeekOrigin origin)
-		{
-			return stream.Seek(offset, origin);
-		}
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            stream.Write(buffer, offset, count);
 
-		public override void SetLength(long value)
-		{
-			stream.SetLength(value);
-		}
+            writeCrc = CalculateCrc(writeCrc, buffer, offset, count);
+        }
 
-		public override int Read(byte[] buffer, int offset, int count)
-		{
-			count = stream.Read(buffer, offset, count);
-			readCrc = CalculateCrc(readCrc, buffer, offset, count);
-			return count;
-		}
+        uint CalculateCrc(uint crc, byte[] buffer, int offset, int count)
+        {
+            unchecked
+            {
+                for (int i = offset, end = offset + count; i < end; i++)
+                    crc = (crc >> 8) ^ CRC32.table[(crc ^ buffer[i]) & 0xFF];
+            }
+            return crc;
+        }
 
-		public override void Write(byte[] buffer, int offset, int count)
-		{
-			stream.Write(buffer, offset, count);
+        #region Stream Passthrough
+        public override bool CanRead
+        {
+            get { return stream.CanRead; }
+        }
 
-			writeCrc = CalculateCrc(writeCrc, buffer, offset, count);
-		}
+        public override bool CanSeek
+        {
+            get { return stream.CanSeek; }
+        }
 
-		uint CalculateCrc(uint crc, byte[] buffer, int offset, int count)
-		{
-			unchecked
-			{
-				for (int i = offset, end = offset + count; i < end; i++)
-					crc = (crc >> 8) ^ table[(crc ^ buffer[i]) & 0xFF];
-			}
-			return crc;
-		}
+        public override bool CanWrite
+        {
+            get { return stream.CanWrite; }
+        }
 
-		static private uint[] table = GenerateTable();
+        public override void Flush()
+        {
+            stream.Flush();
+        }
 
-		static private uint[] GenerateTable()
-		{
-			unchecked
-			{
-				uint[] table = new uint[256];
+        public override long Length
+        {
+            get { return stream.Length; }
+        }
 
-				uint crc;
-				const uint poly = 0xEDB88320;
-				for (uint i = 0; i < table.Length; i++)
-				{
-					crc = i;
-					for (int j = 8; j > 0; j--)
-					{
-						if ((crc & 1) == 1)
-							crc = (crc >> 1) ^ poly;
-						else
-							crc >>= 1;
-					}
-					table[i] = crc;
-				}
+        public override long Position
+        {
+            get
+            {
+                return stream.Position;
+            }
+            set
+            {
+                stream.Position = value;
+            }
+        }
 
-				return table;
-			}
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            return stream.Seek(offset, origin);
+        }
 
-		}
-
-		uint readCrc = unchecked(0xFFFFFFFF);
-
-		/// <summary>
-		/// Gets the CRC checksum of the data that was read by the stream thus far.
-		/// </summary>
-		public uint ReadCrc
-		{
-			get { return unchecked(readCrc ^ 0xFFFFFFFF); }
-		}
-
-		uint writeCrc = unchecked(0xFFFFFFFF);
-
-		/// <summary>
-		/// Gets the CRC checksum of the data that was written to the stream thus far.
-		/// </summary>
-		public uint WriteCrc
-		{
-			get { return unchecked(writeCrc ^ 0xFFFFFFFF); }
-		}
-
-		/// <summary>
-		/// Resets the read and write checksums.
-		/// </summary>
-		public void ResetChecksum()
-		{
-			readCrc = unchecked(0xFFFFFFFF);
-			writeCrc = unchecked(0xFFFFFFFF);
-		}
-	}
+        public override void SetLength(long value)
+        {
+            stream.SetLength(value);
+        }
+        #endregion
+    }
 }

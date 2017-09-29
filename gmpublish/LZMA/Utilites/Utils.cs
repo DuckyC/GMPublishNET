@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace gmpublish.LZMA.Utilites
+namespace GMPublish.LZMA.Utilites
 {
     internal enum BlockType : byte
     {
